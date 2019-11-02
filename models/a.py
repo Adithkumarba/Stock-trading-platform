@@ -22,6 +22,28 @@ def getuse(username):
 def save_user(user_info) :
 	db.users.insert_one(user_info)
 
+def update_stock(userinfo):
+	query={"username" : session["username"]}
+	action={
+			"$set":
+			{
+				"funds":userinfo['funds'],
+				"stocklist":userinfo['stocklist']
+			}
+		}
+	db['users'].update(query,action)
+
+
+	
+
+def getfund(username):
+	query = {'username': username}
+	result = db['users'].find_one(query)
+	return result['funds']
+
+''''''
+
+
 def product_exists(product_name) :
 	query={ 'name' : product_name}
 	result=db['products'].find_one(query)
@@ -74,3 +96,4 @@ def product_names_list() :
 				
 		names=list(map(lambda x: x['name'],db['products'].find()))
 		return names
+

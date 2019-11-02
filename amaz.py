@@ -1,5 +1,5 @@
 from flask import Flask,render_template,request,redirect,url_for,session
-from models.a import getuse,user_exists,save_user,product_exists,add_product,remove_from_db,product_list,add_to_cart,product_names_list,cart_info,remove_from_cart
+from models.a import update_stock,getfund,getuse,user_exists,save_user,product_exists,add_product,remove_from_db,product_list,add_to_cart,product_names_list,cart_info,remove_from_cart
 from fuzzywuzzy import fuzz,process
 from yahoo_fin import stock_info as si
 
@@ -14,7 +14,10 @@ def layout():
 def home():
 	if(session):
 		userinfo = getuse(session['username'])
+
+		
 		#print(userinfo)
+		
 		stocklist = userinfo['stocklist']
 		for i in range(len(stocklist)):
 			stocklist[i]['live']=si.get_live_price(stocklist[i]['sname']).round(2)
@@ -24,9 +27,79 @@ def home():
 	else:
 		return render_template("lay.html",title='Layout')
 
-@app.route('/buy')
+@app.route('/buy',methods=['GET','POST'])
 def buy():
-	return render_template("buy.html")
+	if(session):
+		userinfo = getuse(session['username'])
+		if request.method == 'POST' :
+			script=request.form['script']
+			quantity=int(request.form['quantity'])
+			price=float(si.get_live_price(script).round(2))
+			funds=getfund(session['username'])
+			if float(price)*float(quantity)> funds:	
+				return("Not enough funds,Please add more funds to buy")
+			else:	
+				stock={}
+				stock['sname']=script
+				flag=0
+				for stock_li in userinfo['stocklist']:
+					if stock_li['sname']==script:
+						flag=1
+						stock['price']=round(((price*quantity)+(stock_li['price']*stock_li['quantity']))/(quantity+stock_li['quantity']),2)
+						stock['quantity']=int(quantity+stock_li['quantity'])
+						userinfo['stocklist'].remove(stock_li)
+						userinfo['stocklist'].append(stock)
+				if flag==0:	
+					stock['price']=round(price,2)
+					stock['quantity']=int(quantity)
+					userinfo['stocklist'].append(stock)
+				userinfo['funds']=round(funds-(float(price)*float(quantity)),2)
+				update_stock(userinfo)
+		return render_template("buy.html", userinfo = userinfo )
+		
+	else:
+		return render_template("lay.html",title='Layout')
+	return render_template("home2.html")
+
+
+@app.route('/sell',methods=['GET','POST'])
+def sell():
+	if(session):
+		userinfo = getuse(session['username'])
+		if request.method == 'POST' :
+			script=request.form['script']
+			quantity=int(request.form['quantity'])
+			price=float(si.get_live_price(script).round(2))
+			funds=getfund(session['username'])
+			stock={}
+			stock['sname']=script
+			flag=0
+			for stock_li in userinfo['stocklist']:
+				if stock_li['sname']==script:
+					flag=1
+					netstockq=stock_li['quantity']
+			if flag==0:
+				return("You don't own that stock")
+			elif quantity> netstockq:	
+				return("You are selling more stocks than you have")
+			elif quantity==netstockq:
+				userinfo['stocklist'].remove(stock_li)
+			else:	
+		
+				stock['price']=round(((stock_li['price']*stock_li['quantity'])-(price*quantity))/(stock_li['quantity']-quantity),2)
+
+				stock['quantity']=int(stock_li['quantity']-quantity)
+
+				userinfo['stocklist'].remove(stock_li)
+				userinfo['stocklist'].append(stock)
+				userinfo['funds']=round(funds-(float(price)*float(quantity)),2)
+				
+				update_stock(userinfo)
+		return render_template("sell.html", userinfo = userinfo )
+		
+	else:
+		return render_template("lay.html",title='Layout')
+	return render_template("home2.html")
 
 @app.route('/login',methods=['GET','POST'])
 def login() :
@@ -64,6 +137,9 @@ def signup():
 	return redirect(url_for('home'))
 
 
+
+
+''''''
 @app.route('/products',methods=['GET','POST'])
 def products() :
 	if request.method =='POST' :
@@ -145,6 +221,7 @@ def search() :
 		return "okay"
 		
 	return redirect(url_for('home'))
+
 
 
 	
