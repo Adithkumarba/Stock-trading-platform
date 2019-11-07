@@ -55,6 +55,7 @@ def buy():
 					userinfo['stocklist'].append(stock)
 				userinfo['funds']=round(funds-(float(price)*float(quantity)),2)
 				update_stock(userinfo)
+			return redirect('/home2')
 		return render_template("buy.html", userinfo = userinfo )
 		
 	else:
@@ -74,10 +75,12 @@ def sell():
 			stock={}
 			stock['sname']=script
 			flag=0
-			for stock_li in userinfo['stocklist']:
-				if stock_li['sname']==script:
+			for cur_stock in userinfo['stocklist']:
+				if cur_stock['sname']==script:
 					flag=1
+					stock_li = cur_stock
 					netstockq=stock_li['quantity']
+					break
 			if flag==0:
 				return("You don't own that stock")
 			elif quantity> netstockq:	
@@ -86,15 +89,15 @@ def sell():
 				userinfo['stocklist'].remove(stock_li)
 			else:	
 		
-				stock['price']=round(((stock_li['price']*stock_li['quantity'])-(price*quantity))/(stock_li['quantity']-quantity),2)
+				stock['price']= stock_li['price']
 
 				stock['quantity']=int(stock_li['quantity']-quantity)
 
 				userinfo['stocklist'].remove(stock_li)
 				userinfo['stocklist'].append(stock)
-				userinfo['funds']=round(funds-(float(price)*float(quantity)),2)
-				
-				update_stock(userinfo)
+				userinfo['funds']=round(funds+(float(price)*float(quantity)),2)
+			update_stock(userinfo)
+			return redirect('/home2')
 		return render_template("sell.html", userinfo = userinfo )
 		
 	else:
