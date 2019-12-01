@@ -21,7 +21,7 @@ def home():
 		stocklist = userinfo['stocklist']
 		for i in range(len(stocklist)):
 			stocklist[i]['live']=si.get_live_price(stocklist[i]['sname']).round(2)
-			stocklist[i]['pl']= ((stocklist[i]['live']-stocklist[i]['price']).round(2))*stocklist[i]['quantity']
+			stocklist[i]['pl']= ((stocklist[i]['live']-stocklist[i]['price'])*stocklist[i]['quantity']).round(2)
 		return render_template("home2.html", userinfo = userinfo , stocklist = stocklist)
 
 	else:
