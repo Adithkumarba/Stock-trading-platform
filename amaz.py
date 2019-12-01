@@ -87,12 +87,11 @@ def sell():
 				return("You are selling more stocks than you have")
 			elif quantity==netstockq:
 				userinfo['stocklist'].remove(stock_li)
+				userinfo['funds']=round(funds+(float(price)*float(quantity)),2)				
 			else:	
 		
 				stock['price']= stock_li['price']
-
 				stock['quantity']=int(stock_li['quantity']-quantity)
-
 				userinfo['stocklist'].remove(stock_li)
 				userinfo['stocklist'].append(stock)
 				userinfo['funds']=round(funds+(float(price)*float(quantity)),2)
